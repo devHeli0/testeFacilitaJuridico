@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgresDB:
+    container_name: 'CT_clientManDB'
+    image: postgres:latest
+    networks:
+      - database-network
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./backdev/src/Infrastructure/postgresInitScripts:/docker-entrypoint-initdb.d
+    restart: always
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U admin -d clientManDB -h localhost -p 5432',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    cap_add:
+      - SYS_NICE
+    command: ['postgres', '-c', 'log_statement=all']
+
+  backclientmanagement:
+    container_name: 'CT_backclientmanagement'
+    build: ./backdev
+    networks:
+      - database-network
+      - backend-network
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=${PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=postgresDB
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+    restart: always
+    healthcheck:
+      test: ['CMD', 'nc', '-z', 'localhost', '3001']
+      timeout: 10s
+      retries: 5
+    depends_on:
+      - postgresDB
+
+  frontclientmanagement:
+    container_name: 'CT_frontclientmanagement'
+    build: ./frontdev
+    ports:
+      - 3001:3001
+    environment:
+      - REACT_APP_HOST = http://frontclientmanagement:3001
+      - REACT_APP_API = http://backclientmanagement:3000
+    networks:
+      - backend-network
+
+networks:
+  database-network:
+  backend-network:

@@ -1,0 +1,24 @@
+# Node.js
+node_modules/
+dist/
+
+# Yarn
+yarn-error.log
+yarn.lock
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# Build files
+build/
+
+# TypeScript cache
+tsconfig.tsbuildinfo
+
+#Docker
+Data/
+data/
